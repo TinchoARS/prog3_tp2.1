@@ -1,4 +1,26 @@
-class Sensor {}
+class Sensor {
+    constructor(id, name, type, value, unit, updated_at) {
+        this.id = id;
+        this.name = name;
+        this.type = type;
+        this.value = value;
+        this.unit = unit;
+        this.updated_at = updated_at;
+    }
+
+    set updateValue(newValue) {
+        if (['temperatura', 'humedad', 'presion'].includes(this.type)) {
+            this.value = newValue;
+            this.updated_at = new Date().toISOString();
+        } else {
+            console.error('Tipo de sensor no permitido para actualización de valor'); //este es para cuando no es uno de los tipos nombrados arriba. Esta hardcodeado ya se 
+        }
+    }
+
+    get updateValue() {
+        return this.value;
+    }
+}
 
 class SensorManager {
     constructor() {
@@ -33,7 +55,22 @@ class SensorManager {
         }
     }
 
-    async loadSensors(url) {}
+    async loadSensors(url) {
+        try {
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const sensorsData = await response.json();
+            this.sensors = sensorsData.map(sensor => new Sensor(
+                sensor.id, sensor.name, sensor.type, sensor.value, sensor.unit, sensor.updated_at
+            ));
+            console.log('Sensores cargados:', this.sensors);
+            this.render();
+        } catch (error) {
+            console.error('Failed to load sensors:', error);
+        }
+    }
 
     render() {
         const container = document.getElementById("sensor-container");
@@ -59,15 +96,11 @@ class SensorManager {
                             </p>
                         </div>
                         <time datetime="${sensor.updated_at}">
-                            Última actualización: ${new Date(
-                                sensor.updated_at
-                            ).toLocaleString()}
+                            Última actualización: ${new Date(sensor.updated_at).toLocaleString()}
                         </time>
                     </div>
                     <footer class="card-footer">
-                        <a href="#" class="card-footer-item update-button" data-id="${
-                            sensor.id
-                        }">Actualizar</a>
+                        <a href="#" class="card-footer-item update-button" data-id="${sensor.id}">Actualizar</a>
                     </footer>
                 </div>
             `;
